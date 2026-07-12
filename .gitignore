@@ -1,0 +1,4 @@
+# Ignore Firebase Admin private key
+/config/multivendor-6fc02-firebase-adminsdk-fbsvc-7d0ff03d86.json
+node_modules
+.env
