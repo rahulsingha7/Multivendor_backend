@@ -1,7 +1,6 @@
 // middleware/securityMiddleware.js
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const xss = require("xss-clean");
 const hpp = require("hpp");
 
 // ── 1. Helmet — security headers ─────────────────────────────────────────
@@ -51,7 +50,25 @@ const externalApiLimiter = rateLimit({
 });
 
 // ── 3. XSS Protection — sanitizes user input ─────────────────────────────
-const xssMiddleware = xss();
+const xssMiddleware = (req, res, next) => {
+  const sanitize = (obj) => {
+    if (!obj) return obj;
+    Object.keys(obj).forEach((key) => {
+      if (typeof obj[key] === "string") {
+        obj[key] = obj[key]
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#x27;")
+          .replace(/\//g, "&#x2F;");
+      } else if (typeof obj[key] === "object") {
+        sanitize(obj[key]);
+      }
+    });
+  };
+  if (req.body) sanitize(req.body);
+  next();
+};
 
 // ── 4. HPP — prevents HTTP parameter pollution ───────────────────────────
 const hppMiddleware = hpp();
