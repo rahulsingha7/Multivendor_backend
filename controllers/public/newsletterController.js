@@ -1,5 +1,5 @@
 //controllers//public//newsletterController
-const NewsletterSubscriber = require("../../models/NewsletterSubscriber");
+const NewsletterSubscriber = require("../../models/Newslettersubscriber");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -19,24 +19,20 @@ exports.subscribe = async (req, res) => {
       email: normalizedEmail,
     });
     if (existing) {
-      return res
-        .status(200)
-        .json({
-          message: "You're already subscribed!",
-          alreadySubscribed: true,
-        });
+      return res.status(200).json({
+        message: "You're already subscribed!",
+        alreadySubscribed: true,
+      });
     }
 
     await NewsletterSubscriber.create({ email: normalizedEmail });
     res.status(201).json({ message: "Subscribed successfully" });
   } catch (error) {
     if (error.code === 11000) {
-      return res
-        .status(200)
-        .json({
-          message: "You're already subscribed!",
-          alreadySubscribed: true,
-        });
+      return res.status(200).json({
+        message: "You're already subscribed!",
+        alreadySubscribed: true,
+      });
     }
     res.status(500).json({ message: "Server error", error: error.message });
   }

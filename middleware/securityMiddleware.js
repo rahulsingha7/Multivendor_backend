@@ -38,13 +38,12 @@ const authLimiter = rateLimit({
   },
 });
 
-// External API limit — 200 requests per 15 minutes per API key
+// External API limit — 200 requests per 15 minutes
 const externalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.headers["x-api-key"] || req.ip,
   message: {
     error: "API rate limit exceeded",
     message: "You have exceeded the API request limit. Please slow down.",
