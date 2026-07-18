@@ -46,9 +46,12 @@ app.use(bodyParser.json({ limit: "10mb" }));
 app.use(xssMiddleware);
 
 // 5. Rate limiting
-app.use("/api/auth", authLimiter); // strict on auth
-app.use("/api/external", externalApiLimiter); // per API key
-app.use("/api/", generalLimiter); // general for everything else
+// Rate limiting — applied selectively
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/forgot-password", authLimiter);
+app.use("/api/external", externalApiLimiter);
+app.use("/api/", generalLimiter);
 
 //  All other route imports
 const authRoutes = require("./routes/auth");

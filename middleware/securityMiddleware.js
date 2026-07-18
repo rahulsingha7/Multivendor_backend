@@ -11,10 +11,10 @@ const helmetMiddleware = helmet({
 
 // ── 2. Rate Limiters ──────────────────────────────────────────────────────
 
-// General API limit — 100 requests per 15 minutes per IP
+// General API limit — 300 requests per 15 minutes per IP
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -24,10 +24,10 @@ const generalLimiter = rateLimit({
   },
 });
 
-// Auth limit — 10 requests per 15 minutes (prevents brute force)
+// Auth limit — 50 requests per 15 minutes (prevents brute force)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
