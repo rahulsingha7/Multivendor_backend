@@ -132,7 +132,7 @@ const askGemini = async (message) => {
         "Content-Type": "application/json",
         "x-goog-api-key": GEMINI_API_KEY,
       },
-      timeout: 10000,
+      timeout: 20000,
     },
   );
 
