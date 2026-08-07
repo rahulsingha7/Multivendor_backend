@@ -8,10 +8,19 @@ const admin = require("../utils/firebaseAdmin");
 const generateCode = () =>
   Math.floor(100000 + Math.random() * 900000).toString();
 
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
 
   try {
+    if (!PASSWORD_REGEX.test(password || "")) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters and include a letter and a number",
+      });
+    }
+
     const existing = await User.findOne({ email });
     if (existing)
       return res.status(400).json({ message: "Email already exists" });
@@ -222,6 +231,13 @@ exports.resetPassword = async (req, res) => {
     if (!user)
       return res.status(400).json({ message: "Token is invalid or expired" });
 
+    if (!PASSWORD_REGEX.test(password || "")) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters and include a letter and a number",
+      });
+    }
+
     user.password = await bcrypt.hash(password, 10);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
@@ -263,10 +279,11 @@ exports.updateProfile = async (req, res) => {
         return res
           .status(400)
           .json({ message: "Current password is incorrect" });
-      if (newPassword.length < 6)
-        return res
-          .status(400)
-          .json({ message: "Password must be at least 6 characters" });
+      if (!PASSWORD_REGEX.test(newPassword))
+        return res.status(400).json({
+          message:
+            "Password must be at least 8 characters and include a letter and a number",
+        });
       user.password = await bcrypt.hash(newPassword, 10);
     }
 

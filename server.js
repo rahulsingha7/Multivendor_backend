@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 require("dotenv").config();
-
+console.log("GEMINI_MODEL is:", process.env.GEMINI_MODEL);
 const app = express();
 
 // ── Security Middleware ───────────────────────────────────────────────────
@@ -66,6 +66,7 @@ const categoryRoutes = require("./routes/public/categoryRoutes");
 const publicProductRoutes = require("./routes/public/productRoutes");
 const publicReviewRoutes = require("./routes/public/reviewRoutes");
 const newsletterRoutes = require("./routes/public/newsletterRoutes");
+const chatRoutes = require("./routes/public/chatRoutes");
 const customerOrderRoutes = require("./routes/customer/orderRoutes");
 const customerReviewRoutes = require("./routes/customer/reviewRoutes");
 const paymentRoutes = require("./routes/customer/paymentRoutes");
@@ -80,12 +81,15 @@ const wishlistRoutes = require("./routes/customer/wishlistRoutes");
 const customerProductRoutes = require("./routes/customer/productRoutes");
 const apiKeyRoutes = require("./routes/admin/apiKeyRoutes");
 const externalApiRoutes = require("./routes/public/externalApiRoutes");
-
+//  Zepto (PayID) webhook — same reasoning, raw body before JSON parsing
+const zeptoWebhookRoutes = require("./routes/customer/zeptoWebhookRoutes");
+const payIdRoutes = require("./routes/customer/payIdRoutes");
 // ✅ Use all API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/reviews", publicReviewRoutes);
 app.use("/api/newsletter", newsletterRoutes);
+app.use("/api/customer", customerRoutes);
 app.use("/api/customer/reviews", customerReviewRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/products/public", publicProductRoutes);
@@ -104,9 +108,13 @@ app.use("/api/admin/api-keys", apiKeyRoutes);
 app.use("/api/customer/coupons", customerCouponRoutes);
 app.use("/api/customer/wishlist", wishlistRoutes);
 app.use("/api/customer/products", customerProductRoutes);
+
+app.use("/webhook/zepto", bodyParser.raw({ type: "application/json" }));
+app.use("/webhook/zepto", zeptoWebhookRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/customer", customerRoutes);
+app.use("/api/payid", payIdRoutes);
+app.use("/api/chat", chatRoutes);
 
 // ── Shopify-style API Platform ───────────────────────────────────────────
 app.use("/api/external", externalApiRoutes);

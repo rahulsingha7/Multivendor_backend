@@ -6,15 +6,12 @@ exports.getAllOrders = async (req, res) => {
     const limit = 10;
     const skip = (parseInt(page) - 1) * limit;
 
-    // Build base query
     const matchStage = {};
 
-    // Search by customer name/email and phone
     if (search) {
       matchStage.$or = [{ phone: { $regex: search, $options: "i" } }];
     }
 
-    // Use aggregation to join and filter properly
     const pipeline = [
       {
         $lookup: {
@@ -27,7 +24,6 @@ exports.getAllOrders = async (req, res) => {
       { $unwind: "$customer" },
     ];
 
-    // Add customer name/email search
     if (search) {
       pipeline.push({
         $match: {
@@ -40,7 +36,6 @@ exports.getAllOrders = async (req, res) => {
       });
     }
 
-    // Add status filtering
     if (status) {
       pipeline.push({
         $match: {
@@ -49,7 +44,6 @@ exports.getAllOrders = async (req, res) => {
       });
     }
 
-    // Add category filtering
     if (category) {
       pipeline.push({
         $match: {
@@ -61,14 +55,13 @@ exports.getAllOrders = async (req, res) => {
     pipeline.push(
       { $sort: { createdAt: -1 } },
       { $skip: skip },
-      { $limit: limit }
+      { $limit: limit },
     );
 
     const orders = await Order.aggregate(pipeline);
 
-    // Total count (for pagination)
     const totalCountPipeline = pipeline.filter(
-      (stage) => !stage.$skip && !stage.$limit
+      (stage) => !stage.$skip && !stage.$limit,
     );
     totalCountPipeline.push({ $count: "total" });
     const countResult = await Order.aggregate(totalCountPipeline);
