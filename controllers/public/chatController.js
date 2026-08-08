@@ -7,6 +7,9 @@
 // limit hit, missing API key) so the widget never goes fully silent.
 
 const axios = require("axios");
+const https = require("https");
+
+const gemHttpsAgent = new https.Agent({ family: 4, keepAlive: true });
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
@@ -132,7 +135,8 @@ const askGemini = async (message) => {
         "Content-Type": "application/json",
         "x-goog-api-key": GEMINI_API_KEY,
       },
-      timeout: 20000,
+      timeout: 15000,
+      httpsAgent: gemHttpsAgent,
     },
   );
 
