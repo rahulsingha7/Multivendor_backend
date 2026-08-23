@@ -22,7 +22,7 @@ This is the backend of a full-stack multivendor e-commerce platform built using 
 
 ### 🛒 Customer Experience
 - Browse products with category & search filters
-- Add items to cart (stored in frontend context/localStorage)
+- Add items to cart and wishlist
 - Checkout flow with Stripe payment (cards, Apple Pay, Google Pay)
 - Coupon/discount code support
 - Submit/edit/delete product reviews
@@ -41,6 +41,15 @@ This is the backend of a full-stack multivendor e-commerce platform built using 
 - Powered by Google's Gemini API, with a rule-based fallback if the API is unavailable
 - Answers questions about shipping, orders, payments, vendor signup, and coupons
 
+### 🔒 Security
+- **Helmet** for secure HTTP headers
+- Rate limiting on auth and general API routes
+- HTTP Parameter Pollution (HPP) protection
+- Input sanitization against XSS
+
+### 📖 API Documentation
+- Interactive Swagger docs available at `/api/docs`
+
 ---
 
 ## 🧰 Technologies Used
@@ -57,6 +66,10 @@ This is the backend of a full-stack multivendor e-commerce platform built using 
 | **stripe**        | Payment gateway (cards, Apple Pay, Google Pay) |
 | **firebase-admin**| Google Sign-In verification               |
 | **Gemini API**    | AI-powered support chatbot                |
+| **helmet**        | Security headers                          |
+| **express-rate-limit** | Rate limiting                        |
+| **hpp**           | HTTP parameter pollution protection       |
+| **swagger-ui-express** | Interactive API documentation         |
 | **cookie-parser**, **cors**, **dotenv** | Server utilities       |
 
 ---
@@ -90,6 +103,9 @@ FIREBASE_ADMIN_JSON=your_firebase_service_account_json
 
 ---
 
+
+---
+
 ## 🔌 API Endpoints Overview
 
 ### 🔑 Auth
@@ -107,6 +123,7 @@ FIREBASE_ADMIN_JSON=your_firebase_service_account_json
 - `PUT /api/customer/reviews/:id` – Edit a review (protected)
 - `DELETE /api/customer/reviews/:id` – Delete a review (protected)
 - `POST /api/customer/coupons/validate` – Validate and apply a coupon code
+- `GET /api/customer/wishlist` – Get/manage wishlist items
 
 ---
 
@@ -196,6 +213,13 @@ stripe listen --forward-to localhost:5000/webhook
 - Falls back to a rule-based FAQ matcher if the API is unavailable or rate-limited
 - Answers questions about shipping, orders, payments, vendor signup, and coupons
 
+---
+
+## 📖 API Documentation
+
+Interactive Swagger documentation is available at:
+/api/docs
+```
 ---
 
 ## 📦 Scripts
