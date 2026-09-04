@@ -1,6 +1,6 @@
 # 🛒 Multivendor Shop Backend
 
-This is the backend of a full-stack multivendor e-commerce platform built using **Express.js**, **MongoDB**, and **Stripe**. It handles authentication, vendor management, product listings, order processing, payments, and admin moderation.
+This is the backend of a full-stack multivendor e-commerce platform built using **Express.js**, **MongoDB**, and **Stripe**. It handles authentication, vendor management, product listings, order processing, payments, admin moderation, and customer support.
 
 ---
 
@@ -8,26 +8,47 @@ This is the backend of a full-stack multivendor e-commerce platform built using 
 
 ### 🔐 Authentication & Authorization
 - JWT-based login/register system
+- Password strength validation (min 8 characters, letter + number required)
+- Google Sign-In via Firebase
 - Role-based access: `customer`, `vendor`, `admin`
 - Protected routes for each role
 
 ### 🛍 Vendor Dashboard
 - Create, update, delete products
 - Upload product images via **Cloudinary**
+- AI-generated product descriptions (Claude API)
 - View vendor-specific orders
 - Earnings tracking
 
 ### 🛒 Customer Experience
 - Browse products with category & search filters
-- Add items to cart (stored in frontend context/localStorage)
-- Checkout flow with Stripe payment
+- Add items to cart and wishlist
+- Checkout flow with Stripe payment (cards, Apple Pay, Google Pay)
+- Coupon/discount code support
 - Submit/edit/delete product reviews
-- View past orders
+- View past orders with real-time status tracking
+- Live chat support widget (Gemini-powered FAQ assistant)
 
 ### 🧑‍💼 Admin Panel
 - Approve or reject vendor requests
 - Moderate product listings
+- Manage coupons
 - View all orders and users
+- API key & webhook management for external integrations
+
+### 💬 AI Support Chatbot
+- Floating chat widget on every page
+- Powered by Google's Gemini API, with a rule-based fallback if the API is unavailable
+- Answers questions about shipping, orders, payments, vendor signup, and coupons
+
+### 🔒 Security
+- **Helmet** for secure HTTP headers
+- Rate limiting on auth and general API routes
+- HTTP Parameter Pollution (HPP) protection
+- Input sanitization against XSS
+
+### 📖 API Documentation
+- Interactive Swagger docs available at `/api/docs`
 
 ---
 
@@ -42,17 +63,23 @@ This is the backend of a full-stack multivendor e-commerce platform built using 
 | **multer**        | File upload handling                      |
 | **cloudinary**    | Hosting uploaded product images           |
 | **nodemailer**    | Sending transactional emails              |
-| **stripe**        | Payment gateway        |
+| **stripe**        | Payment gateway (cards, Apple Pay, Google Pay) |
+| **firebase-admin**| Google Sign-In verification               |
+| **Gemini API**    | AI-powered support chatbot                |
+| **helmet**        | Security headers                          |
+| **express-rate-limit** | Rate limiting                        |
+| **hpp**           | HTTP parameter pollution protection       |
+| **swagger-ui-express** | Interactive API documentation         |
 | **cookie-parser**, **cors**, **dotenv** | Server utilities       |
 
 ---
 
-
 ## ⚙️ Environment Variables
 
 Create a `.env` file in the root with:
+
 PORT=5000
-MONGODB_URI=your_mongo_uri
+MONGO_URI=your_mongo_uri
 JWT_SECRET=your_jwt_secret
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -65,15 +92,28 @@ STRIPE_WEBHOOK_SECRET=your_webhook_secret
 EMAIL_USER=your_email@example.com
 EMAIL_PASS=your_email_password_or_app_password
 
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-flash-latest
+
 CLIENT_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
+
+FIREBASE_ADMIN_JSON=your_firebase_service_account_json
+
+
+---
+
 
 ---
 
 ## 🔌 API Endpoints Overview
 
 ### 🔑 Auth
-- `POST /api/auth/register` – Register as customer or vendor (with email verification)
+- `POST /api/auth/register` – Register as customer or vendor (with email verification + password strength check)
 - `POST /api/auth/login` – Login and receive JWT
+- `POST /api/auth/google` – Google Sign-In via Firebase
+- `POST /api/auth/forgot-password` – Request password reset link
+- `POST /api/auth/reset-password/:token` – Reset password
 
 ---
 
@@ -82,6 +122,8 @@ CLIENT_URL=http://localhost:5173
 - `POST /api/customer/reviews` – Create a review (protected)
 - `PUT /api/customer/reviews/:id` – Edit a review (protected)
 - `DELETE /api/customer/reviews/:id` – Delete a review (protected)
+- `POST /api/customer/coupons/validate` – Validate and apply a coupon code
+- `GET /api/customer/wishlist` – Get/manage wishlist items
 
 ---
 
@@ -99,15 +141,19 @@ CLIENT_URL=http://localhost:5173
 ---
 
 ### 🧾 Checkout & Payment (Stripe)
-- `POST /api/payment/create-checkout-session` – Create Stripe checkout session
+- `POST /api/payment/create-checkout-session` – Create Stripe checkout session (cards, Apple Pay, Google Pay)
 - `POST /webhook` – Stripe webhook listener (⚠️ requires raw body)
-- `POST /api/orders` – Create an order in DB after successful payment
+
+---
+
+### 💬 Chatbot
+- `POST /api/chat/message` – Send a message to the support chatbot
 
 ---
 
 ### 👨‍🍳 Vendor Dashboard
 - `POST /api/vendor/products` – Create product (image uploads via Cloudinary)
-- `GET /api/vendor/products` – Get vendor’s own products
+- `GET /api/vendor/products` – Get vendor's own products
 - `PUT /api/vendor/products/:id` – Update product
 - `DELETE /api/vendor/products/:id` – Delete product
 
@@ -123,17 +169,20 @@ CLIENT_URL=http://localhost:5173
 - `GET /api/admin/orders` – View all orders
 - `GET /api/admin/users` – View all users
 - `GET /api/admin/dashboard` – Admin stats & analytics
+- `GET /api/admin/coupons` – Manage coupons
+- `GET /api/admin/api-keys` – Manage API keys & webhooks for external integrations
 
 ---
+
 ## 📬 Nodemailer Integration
 
-We use `nodemailer` to send verification emails during user registration.
+We use `nodemailer` to send verification and password-reset emails.
 
 ### 📌 Use Cases
 
 - ✅ Sends a verification email with a secure activation link after user signup.
+- 🔑 Sends a password reset link when requested.
 - 📥 Ensures only valid email addresses can register.
-
 
 ---
 
@@ -147,17 +196,38 @@ We use `nodemailer` to send verification emails during user registration.
 ## 💳 Stripe Payment Integration
 
 - Checkout powered by **Stripe Checkout**
-- Webhooks listen for payment success
+- Supports cards, Apple Pay, and Google Pay
+- Webhooks listen for payment success (`checkout.session.completed`)
 
 To test webhooks locally:
 
 ```bash
-stripe listen --forward-to localhost:5000/api/orders/webhook
-📦 Scripts
+stripe listen --forward-to localhost:5000/webhook
+```
 
+---
+
+## 🤖 AI Chatbot Integration
+
+- Powered by **Google's Gemini API** (free tier)
+- Falls back to a rule-based FAQ matcher if the API is unavailable or rate-limited
+- Answers questions about shipping, orders, payments, vendor signup, and coupons
+
+---
+
+## 📖 API Documentation
+
+Interactive Swagger documentation is available at:
+/api/docs
+```
+---
+
+## 📦 Scripts
+
+```bash
 # Start in development mode
 npm run dev
 
 # Start in production mode
 npm start
-
+```
