@@ -6,6 +6,20 @@ require("dotenv").config();
 console.log("GEMINI_MODEL is:", process.env.GEMINI_MODEL);
 const app = express();
 
+//  MongoDB connection (serverless-safe, cached across warm invocations).
+//  Must run BEFORE any route middleware — placed here so it's guaranteed to
+//  execute for every request, regardless of which route ends up matching.
+const connectDB = require("./utils/db");
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("MongoDB connection failed:", err);
+    res.status(500).json({ message: "Database connection failed" });
+  }
+});
+
 // ── Security Middleware ───────────────────────────────────────────────────
 const {
   helmetMiddleware,
@@ -137,15 +151,12 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-//  MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log("MongoDB Connection Failed:", err));
+// Local development still needs a real listening server.
+// On Vercel, this file is required by api/index.js and only `app` is used —
+// app.listen() is skipped there since Vercel handles invocation itself.
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+}
 
-//  Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+module.exports = app;
